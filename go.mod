@@ -1,4 +1,4 @@
-module github.com/jfsmig/nginx-access-log-parser
+module github.com/jfsmig/nginx-logs
 
 go 1.14
 
