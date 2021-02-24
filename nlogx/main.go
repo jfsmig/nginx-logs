@@ -72,6 +72,7 @@ var avoidedAgents = []string{
 	"IDBTE4M",
 	"^Java",
 	"Jigsaw",
+	"Lighthouse",
 	"NetSystemsResearch",
 	"NetcraftSurveyAgent",
 	"^Nuclei",
@@ -314,8 +315,7 @@ func filter(in <-chan Record, ko func(Record) bool) <-chan Record {
 }
 
 func main() {
-	var flagVerbose bool
-	var flagFilterAgent, flagFilterSource bool
+	var flagAllAgents, flagAllSources bool
 	var flagJson, flagHuman bool
 	var filteredDays int
 	var nbColumns int64 = DefaultColumns
@@ -336,15 +336,17 @@ func main() {
 		nbColumns = MinColumns
 	}
 
-	pflag.BoolVarP(&flagVerbose, "verbose", "v", false, "Increase the verbosity level")
 	pflag.BoolVarP(&flagHuman, "human", "H", false, "Display a human-readable output")
 	pflag.BoolVarP(&flagJson, "json", "j", false, "Dump JSON records at the output")
-	pflag.BoolVarP(&flagFilterAgent, "agent", "A", false, "Hide suspicious User-Agent")
-	pflag.BoolVarP(&flagFilterSource, "source", "s", false, "Hide well-known sources")
+	pflag.BoolVarP(&flagAllAgents, "agent", "A", false, "Show suspicious User-Agent")
+	pflag.BoolVarP(&flagAllSources, "source", "S", false, "Show well-known sources")
 	pflag.IntVarP(&filteredDays, "days", "d", 0, "Restrict to a time window (in days)")
 	pflag.Int64VarP(&nbColumns, "columns", "c", nbColumns, "Max line length for the human-readable display")
 	pflag.StringSliceVarP(&thisAddr, "addr", "x", make([]string, 0), "Only display record from specific and explicit sources")
 	pflag.Parse()
+
+	flagFilterAgent := !flagAllAgents
+	flagFilterSource := !flagAllSources
 
 	// By default, our 4 filters are just passthrough, they accept everything
 	addrSieve := func(Record) bool { return false }
@@ -357,7 +359,7 @@ func main() {
 		if err != nil {
 			Logger.Fatal().Str("expr", expr).Err(err).Msg("Failed to build the rege matching the agents")
 		} else {
-			Logger.Info().Str("expr", expr).Msg("agents")
+			Logger.Debug().Str("expr", expr).Msg("agents")
 		}
 		agentSieve = func(r Record) bool { return r.Agent == "-" || agentRegex.MatchString(r.Agent) }
 	}

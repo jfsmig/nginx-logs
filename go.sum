@@ -1,6 +1,4 @@
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
-github.com/jfsmig/nginx-logs v0.0.0-20201015114532-b92923f91faf h1:sWRHJCOMSoz5kYAkO9t+rn8fMLYh7l9SkNFM80eK7lk=
-github.com/jfsmig/nginx-logs v0.0.0-20201015114532-b92923f91faf/go.mod h1:szmzhQec94gCELeq2/2RsldDrLTMDyhxephN7r5D2hk=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.18.0 h1:CbAm3kP2Tptby1i9sYy2MGRg0uxIN9cyDb59Ys7W8z8=
