@@ -61,17 +61,23 @@ var Logger = zerolog.
 
 var avoidedAgents = []string{
 	"^Apache-HttpClient",
-	"Analyzer",
+	"Analy",
+	"Archive",
 	"Bing",
 	"Bot",
-	"Crawler",
+	"Crawl",
+	"Detection",
+	"Rank",
 	"^Embarcadero",
 	"Go",
 	"Google Favicon",
+	"Gregarius",
 	"HeadlessChrome",
 	"IDBTE4M",
+	"Inspect",
 	"^Java",
 	"Jigsaw",
+	"Let's Encrypt",
 	"Lighthouse",
 	"NetSystemsResearch",
 	"NetcraftSurveyAgent",
@@ -88,7 +94,11 @@ var avoidedAgents = []string{
 	"Twingly",
 	"Validator",
 	"^W3C_Unicorn",
+	"Wget",
+	"WinHTTP",
+	"WinHttpClient",
 	"^adreview",
+	"analy",
 	"^axios",
 	"baidu",
 	"bot",
@@ -97,11 +107,14 @@ var avoidedAgents = []string{
 	"crawler",
 	"curl",
 	"evc-batch",
+	"kubectl",
 	"facebookextern",
 	"^http",
 	"^github-camo",
 	"jsonws",
+	"libwww-perl",
 	"lighthouse",
+	"panscient",
 	"phpmyadmin",
 	"phpunit",
 	"python-requests",
@@ -109,6 +122,7 @@ var avoidedAgents = []string{
 	"spider",
 	"webtech",
 	"xpanse",
+	"zgrab",
 }
 
 var avoidedAddresses = []string{
@@ -301,7 +315,7 @@ func fmtTime(epoch int64) string {
 	return time.Unix(epoch, 0).Format("2006-01-02 15:04:05")
 }
 
-func filter(in <-chan Record, ko func(Record) bool) <-chan Record {
+func filter(in <-chan Record, ko SieveFilter) <-chan Record {
 	out := make(chan Record, 32)
 	go func() {
 		defer close(out)
@@ -318,6 +332,7 @@ func main() {
 	var flagAllAgents, flagAllSources bool
 	var flagJson, flagHuman bool
 	var filteredDays int
+	var filteredPeriod time.Duration
 	var nbColumns int64 = DefaultColumns
 	var thisAddr []string
 
@@ -340,7 +355,8 @@ func main() {
 	pflag.BoolVarP(&flagJson, "json", "j", false, "Dump JSON records at the output")
 	pflag.BoolVarP(&flagAllAgents, "agent", "A", false, "Show suspicious User-Agent")
 	pflag.BoolVarP(&flagAllSources, "source", "S", false, "Show well-known sources")
-	pflag.IntVarP(&filteredDays, "days", "d", 0, "Restrict to a time window (in days)")
+	pflag.IntVarP(&filteredDays, "days", "d", 1, "Add a coarse time window (in days)")
+	pflag.DurationVarP(&filteredPeriod, "period", "p", 0, "Add a precise time window (like 12h30m)")
 	pflag.Int64VarP(&nbColumns, "columns", "c", nbColumns, "Max line length for the human-readable display")
 	pflag.StringSliceVarP(&thisAddr, "addr", "x", make([]string, 0), "Only display record from specific and explicit sources")
 	pflag.Parse()
@@ -383,9 +399,16 @@ func main() {
 		}()
 	}
 
-	if filteredDays > 0 {
-		oldest := time.Now().AddDate(0, 0, -filteredDays).Unix()
-		dateSieve = func(r Record) bool { return r.When < oldest }
+	if filteredDays > 0 || filteredPeriod > 0 {
+		oldest := time.Now()
+		if filteredPeriod > 0 {
+			oldest = oldest.Add(-filteredPeriod)
+		}
+		if filteredDays > 0 {
+			oldest = oldest.AddDate(0, 0, -filteredDays)
+		}
+		xs := oldest.Unix()
+		dateSieve = func(r Record) bool { return r.When < xs }
 	}
 
 	if len(avoidedReferrer) > 0 {
@@ -414,7 +437,7 @@ func main() {
 		}
 	} else {
 		if flagHuman {
-			format := fmt.Sprintf("%s %%-15s %%-3d %%-60.60s  %%-40.40s  %%.%ds\n", nbColumns-145)
+			format := fmt.Sprintf("%%s %%-15s %%-3d %%-60.60s  %%-40.40s  %%.%ds\n", nbColumns-145)
 			for r := range r1 {
 				fmt.Printf(format, fmtTime(r.When), r.Ip, r.Code, r.Path, r.Referrer, r.Agent)
 			}
